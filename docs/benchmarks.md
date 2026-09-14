@@ -14,8 +14,8 @@ baseline/native medians.
 replay, tests) runs the pure-Python core. See the tie-flip caveat below for what
 blocks activation.
 
-Full numbers, repro commands, and per-cell stats live in the mission evidence dir:
-`/home/ubuntu/.factory/missions/47feda13-1d1c-4655-a7fc-663a3cfff395/evidence/bench-rerun/numbers.md`
+Full numbers, repro commands, and per-cell stats live in-repo at
+[`benchmarks/numbers.md`](benchmarks/numbers.md)
 (companion to `research/baseline-vs-native.md` and
 `research/baseline-vs-native-large.md`). All figures below are transcribed from
 that file, never retyped from memory.
