@@ -137,17 +137,44 @@ def run_multi_dispatch_request(
 
     Additive extension over the singular path: re-routes the union of the
     absent districts by composing the pure core primitives via
-    ``optimize_many``. Always takes the direct-tool offline path with an
-    honest label (no model call is attempted for multi-outage); the
-    singular ``run_dispatch_request`` path is untouched. Raises
-    ValueError for unknown techs or a full-crew outage so the API shell
-    can answer with the established error body.
+    ``optimize_many``. Honors the same ``is_live`` AND ``STRANDS_AVAILABLE``
+    gate as ``run_dispatch_request`` — mock mode stays on the direct-tool
+    offline path, while a live attempt that fails falls through honestly
+    with a ``live-error`` path label. Raises ValueError for unknown techs
+    or a full-crew outage so the API shell can answer with the established
+    error body.
     """
-    _ = settings
     label = "+".join(sorted(set(absent_techs)))
+    live_attempted = settings is not None and settings.is_live and STRANDS_AVAILABLE
+    live_failed = False
+    if live_attempted:
+        try:
+            live = run_with_strands(
+                f"{label} called in sick. Re-route their districts with minimum fuel.",
+                settings,
+            )
+        except Exception as exc:
+            logger.warning(
+                "live Strands multi-dispatch failed; "
+                "falling back to direct-tool offline path: %s",
+                exc,
+            )
+            live_failed = True
+        else:
+            report = optimize_many(absent_techs)
+            live["absent_tech"] = label
+            live["report"] = report
+            live["board"] = board_lines(report)
+            return live
     report = optimize_many(absent_techs)
-    if not isinstance(report, dict):
-        raise TypeError("optimize_many must return a report dict")
+    if live_failed:
+        return {
+            "path": "live-error → direct-tool (offline fallback "
+            "after live failure; Bedrock/AgentCore is stretch)",
+            "absent_tech": label,
+            "report": report,
+            "board": board_lines(report),
+        }
     return {
         "path": "direct-tool (offline; Bedrock/AgentCore is stretch)",
         "absent_tech": label,

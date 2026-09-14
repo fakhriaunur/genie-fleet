@@ -66,6 +66,18 @@ def test_unknown_tech_anywhere_keeps_200_error_quirk() -> None:
     assert "report" not in body
 
 
+def test_full_crew_outage_returns_200_error_body() -> None:
+    # Full-crew outage (every tech absent, no covering crew left) keeps the
+    # HTTP-200 error-body contract: the core refuses to drop tasks and the
+    # API shell answers with an error body, not a 4xx and not a report.
+    response = client.post("/dispatch", json={"absent_techs": ["Maya", "Rio", "Sam"]})
+    assert response.status_code == 200
+    body = response.json()
+    assert "covering crew" in body["error"]
+    assert body["known_techs"] == ["Maya", "Rio", "Sam"]
+    assert "report" not in body
+
+
 def test_empty_absent_techs_falls_back_to_singular_path() -> None:
     response = client.post(
         "/dispatch", json={"absent_tech": "Maya", "absent_techs": []}
