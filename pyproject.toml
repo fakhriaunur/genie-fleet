@@ -90,3 +90,15 @@ exclude_lines = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/genie_fleet"]
+
+# M10 packaging (approach B, user-approved): best-effort native wheel hook.
+# hatch_build.py runs for wheel builds only; strict no-op unless
+# GENIE_NATIVE=1, and ANY native failure degrades to the pure-Python wheel.
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
+
+# sdist ships the native C++ sources so flag-on wheels build anywhere.
+[tool.hatch.build.targets.sdist.force-include]
+"native/fleet_core.cpp" = "native/fleet_core.cpp"
+"native/fleet_core.hpp" = "native/fleet_core.hpp"
+"native/CMakeLists.txt" = "native/CMakeLists.txt"

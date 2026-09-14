@@ -1,9 +1,18 @@
-# M2 native scaffold — flagged off, not built
+# M2 native scaffold — packaging wired (M10), runtime still flagged off
 
-This directory is a design scaffold for the M2 C++ Transform seam. It is
-deliberately NOT wired into `pyproject.toml`, `mise.toml`, or any install
-path: nothing here is compiled, and the shipped package never imports it.
-The pure-Python `matrix.py` core remains the submission path.
+This directory is the C++ Transform seam. M10 wires it into packaging via
+a best-effort hatchling custom hook (root `hatch_build.py`, approach B):
+the default wheel build never shells out and stays pure-Python, while
+`GENIE_NATIVE=1` temp-builds the extension and places
+`genie_fleet_native<EXT_SUFFIX>` at the wheel TOP LEVEL (never inside
+`src/genie_fleet`, which `_native.py` does not probe). Any toolchain
+failure warns and still ships the pure-Python wheel. The sdist ships
+these C++ sources. Revert packaging by deleting `hatch_build.py` plus
+the `hooks.custom` stanza in `pyproject.toml`.
+
+Runtime stance is unchanged: `GENIE_NATIVE` stays off by default, the
+pure-Python `matrix.py` core remains the serving path, and nothing here
+is imported unless the flag is on and the extension is present.
 
 ## Pinned versions
 
