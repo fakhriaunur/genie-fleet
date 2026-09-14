@@ -1,7 +1,7 @@
 # Genie-Fleet — Video Script (≤5:00)
 
 Track: Professional Agents. Mock-first; zero AWS spend on camera.
-Total runtime: **4:40** (20 s buffer under the 5:00 cap).
+Total runtime: **4:55** (0:40 + 0:40 + 1:50 + 0:30 + 0:45 + 0:30).
 
 On-camera commands (exact, from `mise.toml` + `README.md`):
 
@@ -47,7 +47,7 @@ Verified outputs below were transcribed from real runs on 2026-09-14
 `POST /dispatch → parse_absent_tech → optimize_dispatch → matrix core →
 fuel accounting → dispatch board`.
 
-## 1:20–3:20 — Live demo (2:00, cumulative 3:20)
+## 1:20–3:10 — Live demo (1:50, cumulative 3:10)
 
 **Run on camera (Plan A — CLI):**
 
@@ -101,7 +101,23 @@ curl -s -X POST http://127.0.0.1:8002/dispatch \
 it exercises the same pure core and is replay-locked (`mise run replay`,
 golden fixtures in `tests/replay/`).
 
-## 3:20–4:10 — Tech (0:50, cumulative 4:10)
+## 3:10–3:40 — Benchmarks (0:30, cumulative 3:40)
+
+**On screen:** `docs/benchmarks/speedup-vs-size.png` (full-screen, read the labels).
+
+**Say:**
+
+> Headroom, honestly measured: against the opt-in C++ core, warm end-to-end
+> dispatch crosses breakeven at roughly twenty to thirty tasks and holds about
+> six to seven times faster from six hundred tasks up to one hundred thousand.
+> Full numbers are in `docs/benchmarks.md`. And the honesty part: the C++ path
+> is proven but NOT active — it ships flagged off, and one exact-tie rounding
+> flip on task 56064 blocks activation until parity is exact.
+
+**Show:** hold the speedup chart; point at the 0.85x start below the breakeven
+line, then the flat ~6x warm band. Do not open any other plot — timebox is 30 s.
+
+## 3:40–4:25 — Tech (0:45, cumulative 4:25)
 
 **On screen:** terminal showing `GET /ready` full body:
 
@@ -124,16 +140,18 @@ golden fixtures in `tests/replay/`).
 > deterministic, offline, zero spend. Strands integration is the real
 > `optimize_dispatch` tool; the response `path` field records whether the
 > `strands-agent` or `direct-tool` branch ran, so a mock is never presented
-> as a model run. PyArrow, the C++ pybind11 core, Bedrock, and AgentCore are
+> as a model run. Native interop tracers S1 through S4 plus the wheel hook are
+> proven in isolation and still default-off; Bedrock and AgentCore remain
 > stretch, not in this take.
 
-## 4:10–4:40 — Close (0:30, cumulative 4:40)
+## 4:25–4:55 — Close (0:30, cumulative 4:55)
 
 **Say:**
 
 > Genie-Fleet: one sick-leave call in, minimum-fuel dispatch board out —
-> Strands on the tool boundary, determinism in the core. Repo, diagram, and
-> replay fixtures are public; Built With lists Strands. Thank you.
+> Strands on the tool boundary, determinism in the core. Repo, diagram,
+> benchmarks, and replay fixtures are public; Built With lists Strands.
+> Thank you.
 
 **On screen:** repo URL + Devpost link + "Built With: Strands Agents SDK".
 
@@ -146,3 +164,5 @@ golden fixtures in `tests/replay/`).
   the `mise run demo` fallback one keystroke away.
 - Strands/AgentCore stretch caveat stays in every cut — do not trim the
   honesty line to save time; trim the API Plan B instead.
+- Benchmark beat: show only `speedup-vs-size.png`; the cold-start and
+  absolute-time plots live in `docs/benchmarks.md` for judges who want more.

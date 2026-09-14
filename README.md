@@ -78,6 +78,14 @@ are asserted, not fixed: an unknown tech returns HTTP 200 with an `error`
 body listing the known techs, while an empty `absent_tech` is rejected
 with 422.
 
+## Benchmarks
+
+The opt-in C++ core is proven faster at scale but ships flagged off
+(`GENIE_NATIVE` default-off; one exact-tie flip on task 56064 blocks
+activation). Warm end-to-end dispatch runs ~6.3x faster at 600 tasks, ~6.9x at
+100k, with hot reassign-only speedups of 10-24x. Full tables, plots, and caveats:
+[`docs/benchmarks.md`](docs/benchmarks.md).
+
 ## Native scaffold (tracers S1–S4, off by default)
 
 `native/` holds a reversible C++ interop scaffold: S1 temp-dir
