@@ -1,0 +1,35 @@
+{
+  "name": "Genie-Fleet — agents-for-humans",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+      }
+    }
+  },
+  "forwardPorts": [8002],
+  "portsAttributes": {
+    "8002": {
+      "label": "Genie-Fleet API (FastAPI)",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "curl -fsSL https://mise.run | sh && export PATH=\"$HOME/.local/bin:$PATH\" && mise run setup && echo 'devcontainer ready — try: mise run check; mise run qa'",
+  "postStartCommand": "echo 'Genie-Fleet devcontainer — run: mise run dev (api :8002)'",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true
+}

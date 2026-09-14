@@ -1,0 +1,43 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.7
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=150']
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: check-type
+        name: mypy strict (project env)
+        entry: mypy src scripts/export_openapi.py
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: check-complexity
+        name: cyclomatic complexity (ruff C901, max 10)
+        entry: ruff check --select C901 --target-version py314
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: dead-code-vulture
+        name: dead code detection (vulture)
+        entry: python -m vulture src/ .vulture_whitelist.py --min-confidence 80 --exclude '*__pycache__*'
+        language: system
+        pass_filenames: false
+      - id: tech-debt-todos
+        name: tech debt — TODOs must reference issue
+        entry: bash scripts/check_tech_debt.sh
+        language: system
+        pass_filenames: false
