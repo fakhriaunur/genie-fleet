@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from genie_fleet.logging import get_logger
-from genie_fleet.matrix import CANNED_ABSENT_TECH, TECH_HOME
+from genie_fleet.matrix import CANNED_ABSENT_TECH, TECH_HOME, optimize_many
 from genie_fleet.settings import Settings, load_settings
 from genie_fleet.tools import STRANDS_AVAILABLE, optimize_dispatch
 
@@ -125,6 +125,32 @@ def run_dispatch_request(text: str, settings: Settings | None = None) -> dict[st
     return {
         "path": "direct-tool (offline; Bedrock/AgentCore is stretch)",
         "absent_tech": absent,
+        "report": report,
+        "board": board_lines(report),
+    }
+
+
+def run_multi_dispatch_request(
+    absent_techs: list[str], settings: Settings | None = None
+) -> dict[str, Any]:
+    """Handle one multi-outage dispatcher request; returns board + report.
+
+    Additive extension over the singular path: re-routes the union of the
+    absent districts by composing the pure core primitives via
+    ``optimize_many``. Always takes the direct-tool offline path with an
+    honest label (no model call is attempted for multi-outage); the
+    singular ``run_dispatch_request`` path is untouched. Raises
+    ValueError for unknown techs or a full-crew outage so the API shell
+    can answer with the established error body.
+    """
+    _ = settings
+    label = "+".join(sorted(set(absent_techs)))
+    report = optimize_many(absent_techs)
+    if not isinstance(report, dict):
+        raise TypeError("optimize_many must return a report dict")
+    return {
+        "path": "direct-tool (offline; Bedrock/AgentCore is stretch)",
+        "absent_tech": label,
         "report": report,
         "board": board_lines(report),
     }

@@ -98,6 +98,21 @@
             "title": "Absent Tech",
             "default": "Maya"
           },
+          "absent_techs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absent Techs",
+            "description": "Optional multi-outage list. When absent or empty, the singular absent_tech path runs unchanged; when non-empty, the union of the listed districts is re-routed."
+          },
           "notes": {
             "type": "string",
             "maxLength": 500,

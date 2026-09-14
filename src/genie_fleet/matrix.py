@@ -162,6 +162,44 @@ def reassign_sick_leave(fleet: Fleet, absent_tech: str) -> Fleet:
     return Fleet(rows=tuple(rows))
 
 
+def reassign_multi_sick_leave(fleet: Fleet, absent_techs: list[str]) -> Fleet:
+    """Re-route the union of several techs' districts. Pure.
+
+    Composes the existing core primitives (``nearest_cover`` over the
+    still-present crew); every task owned by any absent tech moves to the
+    nearest available tech and is marked REASSIGNED, all other rows are
+    untouched. Raises ValueError for unknown techs or a full-crew outage
+    (refuses to silently drop tasks instead of guessing). Deterministic:
+    duplicate names collapse and ties break by tech name via
+    ``nearest_cover``.
+    """
+    absent_set = sorted(set(absent_techs))
+    for tech in absent_set:
+        if tech not in TECH_HOME:
+            raise ValueError(f"unknown tech: {tech!r}")
+    available = sorted(tech for tech in TECH_HOME if tech not in absent_set)
+    if not available:
+        raise ValueError("no covering crew available; refusing to drop tasks")
+    rows: list[TaskRow] = []
+    for row in fleet.rows:
+        if row.assigned_tech not in absent_set:
+            rows.append(row)
+            continue
+        cover = nearest_cover(row, available)
+        rows.append(
+            TaskRow(
+                task_id=row.task_id,
+                x=row.x,
+                y=row.y,
+                priority=row.priority,
+                zone=row.zone,
+                assigned_tech=cover,
+                status=TaskStatus.REASSIGNED,
+            )
+        )
+    return Fleet(rows=tuple(rows))
+
+
 def dispatch_report(
     fleet_before: Fleet, fleet_after: Fleet, absent_tech: str
 ) -> dict[str, object]:
@@ -214,3 +252,18 @@ def optimize(absent_tech: str = CANNED_ABSENT_TECH) -> dict[str, object]:
     before = seed_fleet()
     after = reassign_sick_leave(before, absent_tech)
     return dispatch_report(before, after, absent_tech)
+
+
+def optimize_many(absent_techs: list[str]) -> dict[str, object]:
+    """One-call multi-outage optimizer: seed board → union re-route → report.
+
+    Pure; composes ``seed_fleet``, ``reassign_multi_sick_leave``,
+    ``dispatch_report``, and the frozen fuel math. The report keeps the
+    singular shape (``absent_tech`` stays a string, joined with ``+`` in
+    sorted order); the singular ``optimize()`` path is untouched.
+    """
+    absent_set = sorted(set(absent_techs))
+    label = "+".join(absent_set)
+    before = seed_fleet()
+    after = reassign_multi_sick_leave(before, absent_set)
+    return dispatch_report(before, after, label)

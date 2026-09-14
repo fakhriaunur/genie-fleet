@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import Response
 
 from genie_fleet import __version__
-from genie_fleet.agent import run_dispatch_request
+from genie_fleet.agent import run_dispatch_request, run_multi_dispatch_request
 from genie_fleet.logging import configure_logging, get_logger
 from genie_fleet.matrix import CANNED_ABSENT_TECH, TECH_HOME
 from genie_fleet.settings import Settings, load_settings
@@ -21,6 +21,14 @@ class DispatchRequest(BaseModel):
     """Dispatcher constraint input: who called in sick."""
 
     absent_tech: str = Field(default=CANNED_ABSENT_TECH, min_length=1)
+    absent_techs: list[str] | None = Field(
+        default=None,
+        description=(
+            "Optional multi-outage list. When absent or empty, the singular "
+            "absent_tech path runs unchanged; when non-empty, the union of "
+            "the listed districts is re-routed."
+        ),
+    )
     notes: str = Field(default="", max_length=500)
 
 
@@ -59,6 +67,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/dispatch")
     async def dispatch(request: DispatchRequest) -> dict[str, object]:
+        if request.absent_techs:
+            for tech in request.absent_techs:
+                if tech not in TECH_HOME:
+                    return {
+                        "error": f"unknown tech: {tech!r}",
+                        "known_techs": sorted(TECH_HOME),
+                    }
+            try:
+                outcome = run_multi_dispatch_request(
+                    request.absent_techs, settings=resolved
+                )
+            except ValueError as exc:
+                return {
+                    "error": str(exc),
+                    "known_techs": sorted(TECH_HOME),
+                }
+            logger.info(
+                "dispatch path=%s absent=%s",
+                outcome["path"],
+                outcome["absent_tech"],
+            )
+            response_multi: dict[str, object] = {
+                "path": outcome["path"],
+                "absent_tech": outcome["absent_tech"],
+                "report": outcome["report"],
+                "board": outcome["board"],
+            }
+            return response_multi
         if request.absent_tech not in TECH_HOME:
             return {
                 "error": f"unknown tech: {request.absent_tech!r}",
