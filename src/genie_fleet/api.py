@@ -65,7 +65,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "known_techs": sorted(TECH_HOME),
             }
         outcome = run_dispatch_request(
-            f"{request.absent_tech} called in sick. {request.notes}".strip()
+            f"{request.absent_tech} called in sick. {request.notes}".strip(),
+            settings=resolved,
         )
         logger.info(
             "dispatch path=%s absent=%s", outcome["path"], outcome["absent_tech"]
