@@ -1,0 +1,72 @@
+{
+  "absent_tech": "Maya",
+  "report": {
+    "mode": "mocked",
+    "absent_tech": "Maya",
+    "fuel_before": 12.7,
+    "fuel_after": 22.43,
+    "added_fuel": 9.73,
+    "tasks_moved": 2,
+    "tasks_total": 6,
+    "moved": [
+      {
+        "task_id": 0,
+        "from": "Maya",
+        "to": "Rio",
+        "zone": "north",
+        "priority": 5
+      },
+      {
+        "task_id": 1,
+        "from": "Maya",
+        "to": "Sam",
+        "zone": "north",
+        "priority": 4
+      }
+    ],
+    "board": [
+      {
+        "task_id": 0,
+        "tech": "Rio",
+        "status": "reassigned",
+        "zone": "north",
+        "priority": 5
+      },
+      {
+        "task_id": 1,
+        "tech": "Sam",
+        "status": "reassigned",
+        "zone": "north",
+        "priority": 4
+      },
+      {
+        "task_id": 2,
+        "tech": "Rio",
+        "status": "assigned",
+        "zone": "east",
+        "priority": 3
+      },
+      {
+        "task_id": 3,
+        "tech": "Rio",
+        "status": "assigned",
+        "zone": "east",
+        "priority": 4
+      },
+      {
+        "task_id": 4,
+        "tech": "Sam",
+        "status": "assigned",
+        "zone": "west",
+        "priority": 5
+      },
+      {
+        "task_id": 5,
+        "tech": "Sam",
+        "status": "assigned",
+        "zone": "west",
+        "priority": 2
+      }
+    ]
+  }
+}
