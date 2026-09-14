@@ -1,0 +1,79 @@
+[tools]
+python = "3.14.7"
+pitchfork = "2.25.0"
+
+[env]
+PYTHONPATH = "src"
+GENIE_MODE = "mock"
+
+[tasks.setup]
+description = "One-command fresh-clone setup: seed .env (never overwrite), install deps (idempotent)"
+run = "bash -c '\nset -euo pipefail\nif [ ! -f .env ]; then\n  cp .env.example .env\n  echo \"setup: created .env from .env.example (mock mode default)\"\nelse\n  echo \"setup: .env exists, leaving untouched\"\nfi\npip install --upgrade pip\npip install -e \".[dev]\"\npython --version\n'"
+
+[tasks.dev]
+description = "FastAPI dispatch board viewer (mock mode, auto-reload) for interactive QA"
+run = "python -m uvicorn genie_fleet.api:create_app --factory --host 127.0.0.1 --port \"${API_PORT:-8002}\" --reload"
+
+[tasks.demo]
+description = "Sick-leave re-route dispatch board before/after (zero spend)"
+run = "python -m genie_fleet.cli demo"
+
+[tasks.preview]
+description = "JSON dispatch report against the canned sick-leave scenario"
+run = "python -m genie_fleet.cli preview"
+
+[tasks.export-openapi]
+description = "Export FastAPI OpenAPI schema to docs/openapi.json (committed)"
+run = "python scripts/export_openapi.py"
+
+[tasks.check]
+description = "Run lint, type, and test"
+depends = ["lint", "type", "test"]
+
+[tasks.lint]
+description = "Ruff format check and lint"
+run = "ruff format --check . && ruff check ."
+
+[tasks.type]
+description = "Type check with mypy strict"
+run = "mypy src scripts/export_openapi.py"
+
+[tasks.test]
+description = "Pytest with coverage gate (35% fail_under)"
+run = "pytest --cov=src --cov-report=term-missing --cov-fail-under=35"
+
+[tasks.test-quick]
+description = "Pytest without coverage (fast feedback)"
+run = "pytest -q"
+
+[tasks.qa]
+description = "Ephemeral smoke: api up, curl every endpoint, no manual cleanup"
+run = "./scripts/qa_smoke.sh --ephemeral"
+
+[tasks.smoke]
+description = "Alias for qa"
+run = "./scripts/qa_smoke.sh --ephemeral"
+
+[tasks.replay]
+description = "Deterministic fixture replay (golden files)"
+run = "pytest tests/replay -v"
+
+[tasks.dead-code]
+description = "Dead code detection (vulture, min-confidence 80)"
+run = "python -m vulture src/ .vulture_whitelist.py --min-confidence 80 --exclude '*__pycache__*'"
+
+[tasks.tech-debt]
+description = "Tech debt tracking — TODOs must reference an issue (TODO(#123))"
+run = "bash scripts/check_tech_debt.sh"
+
+[tasks.large-files]
+description = "Large file detection (700 lines / 150KB)"
+run = "bash scripts/check_large_files.sh"
+
+[tasks.agents_md]
+description = "Validate AGENTS.md tasks/paths still match code"
+run = "bash scripts/check_agents_md.sh"
+
+[tasks.devcontainer-verify]
+description = "Verify devcontainer contract without running docker"
+run = "bash scripts/check_large_files.sh && python -c \"import json; json.load(open('.devcontainer/devcontainer.json')); print('devcontainer.json: valid JSON')\""

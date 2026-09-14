@@ -1,0 +1,92 @@
+[project]
+name = "genie-fleet"
+version = "0.1.0"
+description = "Solomon's Genie Fleet — Professional route/task optimizer, mocked SoA matrix + Strands tool"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+license = { text = "MIT" }
+authors = [{ name = "genie-fleet" }]
+dependencies = [
+    "strands-agents>=1.55.1,<2",
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.53.0",
+    "pydantic==2.13.5",
+    "httpx==0.28.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.16.7",
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "vulture==2.16",
+    "httpx==0.28.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "UP", "I", "RUF", "C", "N"]
+ignore = ["E501"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["classmethod"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_configs = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+show_error_codes = true
+exclude = ["tests"]
+ignore_errors = false
+
+[[tool.mypy.overrides]]
+module = "strands.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 35
+show_missing = true
+skip_covered = false
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/genie_fleet"]

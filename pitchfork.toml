@@ -1,0 +1,7 @@
+general.mise = true
+
+[daemons.api]
+run = "mise run dev"
+auto = ["start", "stop"]
+ready_output = "Application startup complete"
+port = 8002
