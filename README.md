@@ -48,6 +48,24 @@ mise run preview  # JSON dispatch report against the canned scenario
 Both run offline against the pure matrix core. Output is replay-locked via
 `mise run replay` (golden fixtures in `tests/replay/`).
 
+## Scenarios
+
+```bash
+pytest tests/scenarios -q
+```
+
+Happy/heavy/edge suites lock the outage contract:
+
+| Absent | Moved / Total | Fuel before → after |
+|---|---|---|
+| Maya | 2 / 6 | 12.7 → 22.43 |
+| Rio | 2 / 6 | 12.7 → 29.28 |
+| Sam | 2 / 6 | 12.7 → 29.28 |
+
+## CI
+
+`.github/workflows/ci.yml` runs lint + type + test + replay on push/PR (Python 3.14).
+
 ## Mock vs live
 
 - Default `GENIE_MODE=mock`: every automated flow (tests, QA smoke,
@@ -55,6 +73,9 @@ Both run offline against the pure matrix core. Output is replay-locked via
 - Live (stretch, human-gated): `GENIE_MODE=live` requires
   `STRANDS_MODEL_ID` plus AWS credentials; the app refuses to boot live
   without a model (fail-closed in `settings.py`).
+- Live path resolves `STRANDS_MODEL_ID` via `BedrockModel` (`AWS_REGION`,
+  default `ap-southeast-3`); missing model or bad credentials fail closed
+  with an honest error, never silent mock. See `docs/rehearsal-log-m5.md`.
 
 ## Credentials
 
