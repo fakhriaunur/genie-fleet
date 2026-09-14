@@ -15,7 +15,8 @@ shell.
 - `src/genie_fleet/`: application code (`api`, `settings`, `logging`,
   `matrix`, `agent`, `tools`, `cli`).
 - `tests/`: unit, integration, and replay (committed golden fixtures).
-- `scripts/`: `qa_smoke.sh`, `export_openapi.py`, repo contract checks.
+- `scripts/`: `qa_smoke.sh`, `export_openapi.py`, `wheel_smoke.py`,
+  `verify_wheel.sh`, repo contract checks.
 - `triage/`: event worksheet and execution record.
 - `docs/openapi.json`: committed FastAPI schema (`mise run export-openapi`).
 
@@ -36,6 +37,12 @@ outside mise via explicit env.
 Use **Pitchfork** as local service manager. Keep service definitions, health
 checks, logs, and shutdown behavior explicit. Do not start persistent services
 without user authorization (`pitchfork start` is the authorized path).
+
+Packaging (M10, best-effort native hook): `mise run build-wheel` builds the
+wheel into `dist/` (pure-Python default; `GENIE_NATIVE=1` embeds the
+top-level `.so`); `mise run verify-wheel` proves flag-off, flag-on, and
+editable no-toolchain installs in isolated prefixes. `GENIE_NATIVE` stays
+off at runtime.
 
 ## Naming conventions (enforced by ruff pep8-naming)
 

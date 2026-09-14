@@ -35,3 +35,61 @@ jobs:
 
       - name: Replay (golden fixtures)
         run: mise run replay
+
+  wheel-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install build frontend
+        run: python -m pip install build
+
+      - name: Build default wheel (no toolchain on PATH)
+        run: python -m build --wheel --outdir dist .
+
+      - name: Assert pure-Python wheel (no .so)
+        run: python scripts/wheel_smoke.py --check-wheel "dist/*.whl" --expect-pure
+
+      - name: Install wheel into a clean prefix
+        run: python -m pip install dist/*.whl
+
+      - name: Smoke installed wheel (flag-off)
+        run: GENIE_MODE=mock python scripts/wheel_smoke.py --expect-pure
+
+  wheel-native:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: Install toolchain (mise cmake+ninja)
+        run: mise install
+
+      - name: Install build frontend and pybind11==3.1.0
+        run: python -m pip install build "pybind11==3.1.0"
+
+      - name: Build native wheel
+        run: GENIE_NATIVE=1 python -m build --wheel --outdir dist .
+
+      - name: Assert top-level .so in wheel
+        run: python scripts/wheel_smoke.py --check-wheel "dist/*.whl" --expect-native
+
+      - name: Install wheel into a clean prefix
+        run: python -m pip install dist/*.whl
+
+      - name: Replay green with GENIE_NATIVE=1
+        run: GENIE_NATIVE=1 GENIE_MODE=mock python scripts/wheel_smoke.py --expect-native
