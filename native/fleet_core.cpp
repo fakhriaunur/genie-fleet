@@ -3,6 +3,8 @@
 // the Python core remains the submission path until the parity gate
 // in native/NOTES.md passes. Requires pybind11 3.1.0 (see NOTES.md).
 
+#include "fleet_core.hpp"
+
 #include <cmath>
 #include <limits>
 #include <string>

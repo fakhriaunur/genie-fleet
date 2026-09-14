@@ -1,6 +1,8 @@
 [tools]
 python = "3.14.7"
 pitchfork = "2.25.0"
+cmake = "4.4.3"
+ninja = "1.13.2"
 
 [env]
 PYTHONPATH = "src"
