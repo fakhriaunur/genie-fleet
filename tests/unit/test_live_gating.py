@@ -30,7 +30,7 @@ def test_mock_never_attempts_live_even_when_sdk_importable(
     """Mock mode stays on direct-tool even with the SDK importable."""
     calls: list[str] = []
 
-    def _spy(text: str) -> dict[str, Any]:
+    def _spy(text: str, settings: Settings | None = None) -> dict[str, Any]:
         calls.append(text)
         raise AssertionError("live path must not run in mock mode")
 
@@ -63,7 +63,7 @@ def test_live_failure_falls_through_with_honest_path(
     """A mocked-Agent failure keeps the Maya 2/6 report, honestly labeled."""
     logged_before = len(caplog.records)
 
-    def _boom(text: str) -> dict[str, Any]:
+    def _boom(text: str, settings: Settings | None = None) -> dict[str, Any]:
         raise RuntimeError("simulated Bedrock outage")
 
     monkeypatch.setattr(agent_module, "STRANDS_AVAILABLE", True)

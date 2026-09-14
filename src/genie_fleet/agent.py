@@ -12,7 +12,7 @@ from typing import Any
 
 from genie_fleet.logging import get_logger
 from genie_fleet.matrix import CANNED_ABSENT_TECH, TECH_HOME
-from genie_fleet.settings import Settings
+from genie_fleet.settings import Settings, load_settings
 from genie_fleet.tools import STRANDS_AVAILABLE, optimize_dispatch
 
 TECH_NAMES = tuple(sorted(TECH_HOME))
@@ -49,11 +49,29 @@ def board_lines(report: dict[str, object]) -> list[str]:
     return lines
 
 
-def run_with_strands(text: str) -> dict[str, Any]:
-    """Run the request through a real Strands Agent. Raises on any failure."""
-    from strands import Agent  # lazy: keeps offline import light
+def run_with_strands(text: str, settings: Settings | None = None) -> dict[str, Any]:
+    """Run the request through a real Strands Agent. Raises on any failure.
 
-    agent = Agent(tools=[optimize_dispatch])
+    The Agent is built on the Bedrock provider path with the configured
+    model id and region (``Settings.strands_model_id`` /
+    ``Settings.aws_region``). Refuses fail-closed when no model id is
+    configured; raises on any failure so callers can fall through honestly.
+    """
+    from strands import Agent  # lazy: keeps offline import light
+    from strands.models import BedrockModel  # lazy: Bedrock provider path
+
+    resolved = settings if settings is not None else load_settings()
+    if not resolved.strands_model_id:
+        raise RuntimeError(
+            "live Strands dispatch requires STRANDS_MODEL_ID; "
+            "refusing to construct the Agent without a model (fail-closed)."
+        )
+
+    provider = BedrockModel(
+        model_id=resolved.strands_model_id,
+        region_name=resolved.aws_region,
+    )
+    agent = Agent(model=provider, tools=[optimize_dispatch])
     absent = parse_absent_tech(text)
     result = agent(
         f"A dispatcher reports {absent} called in sick. "
@@ -79,7 +97,7 @@ def run_dispatch_request(text: str, settings: Settings | None = None) -> dict[st
     live_failed = False
     if live_attempted:
         try:
-            live = run_with_strands(text)
+            live = run_with_strands(text, settings)
             report = optimize_dispatch(absent)
             if not isinstance(report, dict):
                 raise TypeError("optimize_dispatch must return a report dict")
