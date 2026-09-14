@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from genie_fleet._native import try_native_optimize
 from genie_fleet.logging import get_logger
 from genie_fleet.matrix import CANNED_ABSENT_TECH, TECH_HOME, optimize_many
 from genie_fleet.settings import Settings, load_settings
@@ -81,43 +82,41 @@ def run_with_strands(text: str, settings: Settings | None = None) -> dict[str, A
     return {"path": "strands-agent", "result": str(result), "absent_tech": absent}
 
 
-def run_dispatch_request(text: str, settings: Settings | None = None) -> dict[str, Any]:
-    """Handle one dispatcher request; always returns board + report.
+def _singular_report(
+    absent: str, use_native_flag: bool
+) -> tuple[dict[str, object], bool]:
+    """Compute one single-outage report, natively when opted in.
 
-    The live Strands Agent is attempted only when ``settings.is_live`` is
-    true AND the Strands SDK imports; a ``None`` settings (plain unit use)
-    means mock, so mock mode always takes the direct-tool offline path even
-    when the SDK is importable. A failed live attempt is logged distinctly
-    and falls through to the deterministic offline path with an honest
-    ``path`` label naming the live failure (never a bare direct-tool
-    label, never masquerading as a model call).
+    Returns ``(report, via_native)``. Tries ``try_native_optimize`` first
+    so GENIE_NATIVE=1 with the extension present routes natively; any
+    None falls back to the pure-Python ``optimize_dispatch`` tool.
+    Multi-outage callers never use this (native is singular-only).
     """
-    absent = parse_absent_tech(text)
-    live_attempted = settings is not None and settings.is_live and STRANDS_AVAILABLE
-    live_failed = False
-    if live_attempted:
-        try:
-            live = run_with_strands(text, settings)
-            report = optimize_dispatch(absent)
-            if not isinstance(report, dict):
-                raise TypeError("optimize_dispatch must return a report dict")
-            live["report"] = report
-            live["board"] = board_lines(report)
-            return live
-        except Exception as exc:
-            logger.warning(
-                "live Strands dispatch failed; "
-                "falling back to direct-tool offline path: %s",
-                exc,
-            )
-            live_failed = True
+    native_report = try_native_optimize(absent, use_native_flag)
+    if native_report is not None:
+        return native_report, True
     report = optimize_dispatch(absent)
     if not isinstance(report, dict):
         raise TypeError("optimize_dispatch must return a report dict")
+    return report, False
+
+
+def _offline_outcome(
+    absent: str, use_native_flag: bool, live_failed: bool
+) -> dict[str, Any]:
+    """Build the offline outcome for one single-outage request."""
+    report, via_native = _singular_report(absent, use_native_flag)
     if live_failed:
         return {
             "path": "live-error → direct-tool (offline fallback "
             "after live failure; Bedrock/AgentCore is stretch)",
+            "absent_tech": absent,
+            "report": report,
+            "board": board_lines(report),
+        }
+    if via_native:
+        return {
+            "path": "direct-tool (native; SoA lists via genie_fleet_native)",
             "absent_tech": absent,
             "report": report,
             "board": board_lines(report),
@@ -128,6 +127,42 @@ def run_dispatch_request(text: str, settings: Settings | None = None) -> dict[st
         "report": report,
         "board": board_lines(report),
     }
+
+
+def run_dispatch_request(text: str, settings: Settings | None = None) -> dict[str, Any]:
+    """Handle one dispatcher request; always returns board + report.
+
+    The live Strands Agent is attempted only when ``settings.is_live`` is
+    true AND the Strands SDK imports; a ``None`` settings (plain unit use)
+    means mock, so mock mode always takes the direct-tool offline path even
+    when the SDK is importable. A failed live attempt is logged distinctly
+    and falls through to the deterministic offline path with an honest
+    ``path`` label naming the live failure (never a bare direct-tool
+    label, never masquerading as a model call).
+
+    The offline report routes natively when ``settings.use_native`` opts
+    in and the extension is present (byte-equal to Python); otherwise it
+    falls back to the pure-Python tool. Multi-outage stays Python.
+    """
+    absent = parse_absent_tech(text)
+    use_native_flag = settings.use_native if settings is not None else False
+    live_attempted = settings is not None and settings.is_live and STRANDS_AVAILABLE
+    live_failed = False
+    if live_attempted:
+        try:
+            live = run_with_strands(text, settings)
+            report, _ = _singular_report(absent, use_native_flag)
+            live["report"] = report
+            live["board"] = board_lines(report)
+            return live
+        except Exception as exc:
+            logger.warning(
+                "live Strands dispatch failed; "
+                "falling back to direct-tool offline path: %s",
+                exc,
+            )
+            live_failed = True
+    return _offline_outcome(absent, use_native_flag, live_failed)
 
 
 def run_multi_dispatch_request(
