@@ -60,6 +60,10 @@ run = "./scripts/qa_smoke.sh --ephemeral"
 description = "Deterministic fixture replay (golden files)"
 run = "pytest tests/replay -v"
 
+[tasks.build-native-check]
+description = "Tracer bullet S1: configure + build native scaffold in a unique temp dir only (no in-tree outputs, no install)"
+run = "bash -c '\nset -euo pipefail\ncmake --version | head -1\nninja --version\nBUILD_DIR=$(mktemp -d /tmp/genie-native-check.XXXXXX)\ntrap \"rm -rf $BUILD_DIR\" EXIT\nPYBIND11_DIR=$(python -c \"import pybind11; print(pybind11.get_cmake_dir())\")\ncmake -S native -B \"$BUILD_DIR\" -G Ninja -DCMAKE_BUILD_TYPE=Release -Dpybind11_DIR=\"$PYBIND11_DIR\"\ncmake --build \"$BUILD_DIR\"\n'"
+
 [tasks.dead-code]
 description = "Dead code detection (vulture, min-confidence 80)"
 run = "python -m vulture src/ .vulture_whitelist.py --min-confidence 80 --exclude '*__pycache__*'"
