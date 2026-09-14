@@ -203,7 +203,14 @@ def dispatch_report(
 
 
 def optimize(absent_tech: str = CANNED_ABSENT_TECH) -> dict[str, object]:
-    """One-call optimizer: seed board → sick-leave re-route → report. Pure."""
+    """One-call optimizer: seed board → sick-leave re-route → report. Pure.
+
+    STABLE SEAM (M2): this signature and return shape are frozen. The
+    flagged-off native Transform must reproduce this report exactly
+    (golden replay plus fuel_before/after plus tasks_moved identical)
+    before any activation. Behavior lives here in Python; ``_native`` is
+    only a probe and never alters this path.
+    """
     before = seed_fleet()
     after = reassign_sick_leave(before, absent_tech)
     return dispatch_report(before, after, absent_tech)
