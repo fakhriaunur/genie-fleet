@@ -1,0 +1,37 @@
+name: ci
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: Install toolchain and dependencies
+        run: mise run setup
+
+      - name: Lint (ruff format check + ruff check)
+        run: mise run lint
+
+      - name: Typecheck (mypy strict)
+        run: mise run type
+
+      - name: Test (pytest with coverage floor)
+        run: mise run test
+
+      - name: Replay (golden fixtures)
+        run: mise run replay
