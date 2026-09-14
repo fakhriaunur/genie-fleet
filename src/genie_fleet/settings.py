@@ -12,7 +12,7 @@ class Settings:
 
     mode: str = "mock"
     strands_model_id: str = ""
-    aws_region: str = "us-west-2"
+    aws_region: str = "ap-southeast-3"
     api_port: int = 8002
     log_level: str = "info"
     #: Opt-in to the M2 native extension (GENIE_NATIVE=1). Default off;
@@ -43,7 +43,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     return Settings(
         mode=source.get("GENIE_MODE", "mock"),
         strands_model_id=source.get("STRANDS_MODEL_ID", ""),
-        aws_region=source.get("AWS_REGION", "us-west-2"),
+        aws_region=source.get("AWS_REGION", "ap-southeast-3"),
         api_port=int(source.get("API_PORT", "8002")),
         log_level=source.get("LOG_LEVEL", "info"),
         use_native=_parse_native_flag(source.get("GENIE_NATIVE", "0")),
